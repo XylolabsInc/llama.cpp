@@ -145,6 +145,18 @@ class Qwen3VLVisionModel(MmprojModel):
         yield from MmprojModel.modify_tensors(self, data_torch, name, bid)
 
 
+@ModelBase.register("OmniEVIEBackbone")
+class OmniEVIEVisionModel(Qwen3VLVisionModel):
+    def set_gguf_parameters(self):
+        super().set_gguf_parameters()
+        # sentence-transformers processing_kwargs overrides the processor defaults.
+        with open(self.dir_model / "sentence_bert_config.json", encoding="utf-8") as f:
+            config = json.load(f)
+        size = config["processing_kwargs"]["image"]["size"]
+        self.gguf_writer.add_vision_min_pixels(int(size["shortest_edge"]))
+        self.gguf_writer.add_vision_max_pixels(int(size["longest_edge"]))
+
+
 @ModelBase.register("MiniCPMOCRForSequenceClassification")
 class MiniCPMOCRSeqClsVisionModel(Qwen3VLVisionModel):
     def set_gguf_parameters(self):

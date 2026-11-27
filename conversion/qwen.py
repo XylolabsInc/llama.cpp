@@ -755,6 +755,30 @@ class Qwen3_5TextModel(_Qwen35MRopeMixin, _LinearAttentionVReorderBase):
         self._try_set_pooling_type()
 
 
+@ModelBase.register("OmniEVIEBackbone")
+class OmniEVIEModel(Qwen3_5TextModel):
+    model_arch = gguf.MODEL_ARCH.QWEN35
+    no_mtp = True
+
+    @classmethod
+    def filter_tensors(cls, item):
+        name, gen = item
+        if name.startswith("language_model."):
+            name = "model." + name[len("language_model."):]
+        return super().filter_tensors((name, gen))
+
+    def set_gguf_parameters(self):
+        super().set_gguf_parameters()
+        self.gguf_writer.add_pooling_type(gguf.PoolingType.NONE)
+        self.gguf_writer.add_embedding_length_out(int(self.hparams["dim"]))
+
+    def modify_tensors(self, data_torch: Tensor, name: str, bid: int | None) -> Iterable[tuple[str, Tensor]]:
+        if name in ("custom_text_proj.weight", "custom_text_proj.bias"):
+            yield (gguf.TENSOR_NAMES[gguf.MODEL_TENSOR.DENSE_2_OUT] + "." + name.rsplit(".", 1)[1], data_torch)
+            return
+        yield from super().modify_tensors(data_torch, name, bid)
+
+
 @ModelBase.register("MiniCPMOCRForSequenceClassification")
 class MiniCPMOCRSeqClsModel(Qwen3_5TextModel):
     # OCR consistency judge: Qwen3.5 VL trunk with a value head read at the last token

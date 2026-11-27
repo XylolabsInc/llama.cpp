@@ -211,6 +211,13 @@ if (LLAMA_BUILD_TOOLS)
     target_link_libraries  (${TARGET} PRIVATE llama-common mtmd Threads::Threads)
     target_compile_features(${TARGET} PRIVATE cxx_std_17)
 
+    add_executable(llama-mtmd-embedding mtmd-embedding.cpp)
+    target_link_libraries(llama-mtmd-embedding PRIVATE mtmd)
+    target_compile_features(llama-mtmd-embedding PRIVATE cxx_std_17)
+    if(LLAMA_TOOLS_INSTALL)
+        install(TARGETS llama-mtmd-embedding RUNTIME)
+    endif()
+
     # mtmd-debug tool
     add_executable(llama-mtmd-debug debug/mtmd-debug.cpp)
     set_target_properties(llama-mtmd-debug PROPERTIES OUTPUT_NAME llama-mtmd-debug)

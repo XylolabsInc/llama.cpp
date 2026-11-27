@@ -4636,6 +4636,10 @@ void llm_graph_context::build_logits() const {
     if (cparams.embeddings && pooling_type != LLAMA_POOLING_TYPE_NONE) {
         res->t_logits = nullptr;
     }
+    // OmniEVIE (qwen35, non-causal, dense-out) is a multi-vector encoder: it outputs token vectors, never logits
+    if (cparams.embeddings && model.arch == LLM_ARCH_QWEN35 && !hparams.causal_attn && model.dense_2_out_layers != nullptr) {
+        res->t_logits = nullptr;
+    }
 
     // the models declare t_logits without expanding it, so the LM head is computed only when it is expanded here
     if (res->t_logits != nullptr) {
